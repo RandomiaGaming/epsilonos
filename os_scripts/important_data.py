@@ -36,9 +36,9 @@ def Install():
     install_path = f"/usr/bin/{script_name}"
     if script_path == install_path:
         return
-    if os.path.isfile(install_path) and os.path.getmtime(script_path) == os.path.getmtime(install_path):
+    if os.path.exists(install_path) and os.path.getmtime(script_path) == os.path.getmtime(install_path):
         return
-    if os.path.isfile(install_path) and os.path.getmtime(script_path) < os.path.getmtime(install_path):
+    if os.path.exists(install_path) and os.path.getmtime(script_path) < os.path.getmtime(install_path):
         PrintWarning(f"Not installing because script in \"{install_path}\" is newer than \"{script_path}\".")
         return
     if os.geteuid() != 0 or os.getegid() != 0:
@@ -62,7 +62,7 @@ def Main():
         PrintError(f"{script_name} requires root. Try sudo {script_name}.")
         return 1
 
-    payload = [
+    service_payload = [
         f"[Unit]",
         f"Description=Mounts /important_data after root filesystem is mounted.",
         f"After=local-fs.target",
@@ -78,11 +78,11 @@ def Main():
         f"WantedBy=multi-user.target",
     ]
     service_path = "/etc/systemd/system/important_data.service"
-    if os.path.isfile(service_path) and os.path.getmtime(script_path) < os.path.getmtime(service_path):
+    if os.path.exists(service_path) and os.path.getmtime(script_path) < os.path.getmtime(service_path):
         PrintWarning(f"Not installing because service in \"{service_path}\" is newer than \"{script_path}\".")
         return 1
-    if os.path.isfile(service_path) and os.path.getmtime(script_path) > os.path.getmtime(service_path):
-        WriteFile(service_path, "".join([ line + "\n" for line in payload ]))
+    if os.path.exists(service_path) and os.path.getmtime(script_path) > os.path.getmtime(service_path):
+        WriteFile(service_path, "".join([ line + "\n" for line in service_payload ]))
         script_stat = os.stat(script_path)
         os.utime(service_path, (script_stat.st_atime, script_stat.st_mtime))
         RunCommand(f"chmod 755 \"{service_path}\"")
@@ -103,10 +103,11 @@ def Main():
     if status_code != 0:
         PrintError("important_data drive is not connected to this PC.")
         return 1
-    if not os.path.isfile("/etc/keys/important_data.key"):
-        PrintError("Key could not be found at /etc/keys/important_data.key.")
+    important_data_key_path = "/etc/important_data.key"
+    if not os.path.exists(important_data_key_path):
+        PrintError(f"Key could not be found at {important_data_key_path}.")
         return 1
-    RunCommand(f"cryptsetup open \"{important_data_dev}\" crypt_important_data --key-file=/etc/keys/important_data.key")
+    RunCommand(f"cryptsetup open \"{important_data_dev}\" crypt_important_data --key-file=\"{important_data_key_path}\"")
     RunCommand("mount -t ext4 -o rw,noatime,discard,errors=remount-ro /dev/mapper/crypt_important_data /important_data")
 
     return 0

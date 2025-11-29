@@ -37,9 +37,9 @@ def Install():
     install_path = f"/usr/bin/{script_name}"
     if script_path == install_path:
         return
-    if os.path.isfile(install_path) and os.path.getmtime(script_path) == os.path.getmtime(install_path):
+    if os.path.exists(install_path) and os.path.getmtime(script_path) == os.path.getmtime(install_path):
         return
-    if os.path.isfile(install_path) and os.path.getmtime(script_path) < os.path.getmtime(install_path):
+    if os.path.exists(install_path) and os.path.getmtime(script_path) < os.path.getmtime(install_path):
         PrintWarning(f"Not installing because script in \"{install_path}\" is newer than \"{script_path}\".")
         return
     if os.geteuid() != 0 or os.getegid() != 0:

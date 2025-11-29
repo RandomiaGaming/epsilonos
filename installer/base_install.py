@@ -117,6 +117,14 @@ def main():
     print("Installed base system.")
     print()
 
+    # DONT FORGET TO CREATE SOME SWAP
+    # for example a swap file can be created like this
+    # fallocate -l 64G /swapfile
+    # sudo chmod 600 /swapfile
+    # sudo chown +0:+0 /swapfile
+    # sudo mkswap /swapfile
+    # sudo swapon /swapfile
+
     return
 
 
